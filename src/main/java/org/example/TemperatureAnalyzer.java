@@ -17,7 +17,7 @@ public class TemperatureAnalyzer {
     public void detectAnomalies() throws Exception {
         // 1. Загрузка данных из БД
         LocalDateTime cutoffTime = LocalDateTime.now().minusHours(24);
-        List<TemperatureSensor> data = temperatureRepo.findLast24Hours(cutoffTime);
+        List<TemperatureSensor> data = temperatureRepo.findByTimestampAfter(cutoffTime);
 
         // 2. Подготовка данных для Weka
         ArrayList<Attribute> attributes = new ArrayList<>();

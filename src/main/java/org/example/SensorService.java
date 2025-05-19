@@ -1,12 +1,15 @@
 package org.example;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 
+
 @Service
 public class SensorService {
+    @Getter
     @Autowired
     private TemperatureSensorRepository temperatureRepo;
 
@@ -41,4 +44,5 @@ public class SensorService {
         floorHeatingRepo.save(simulator.generateFloorHeating("ванная"));
         floorHeatingRepo.save(simulator.generateFloorHeating("балкон"));
     }
+
 }
