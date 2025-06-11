@@ -11,8 +11,12 @@ public class ElectricitySensor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String device; // "чайник", "стиральная машина"
+    private String device;
     private Double power; // Вт
     private Double totalConsumption; // кВт*ч
     private LocalDateTime timestamp;
+
+    @ManyToOne
+    private Room room;
+
 }

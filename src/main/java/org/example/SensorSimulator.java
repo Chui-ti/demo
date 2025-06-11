@@ -1,4 +1,7 @@
 package org.example;
+
+import org.example.repository.RoomRepository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -8,18 +11,15 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-@Service
+@Component
 public class SensorSimulator {
     private final Random random = new Random();
+    private final RoomRepository roomRepository;
 
-    // Генерация данных температуры
-//    public TemperatureSensor generateTemperature(String room) {
-//        TemperatureSensor sensor = new TemperatureSensor();
-//        sensor.setRoom(room);
-//        sensor.setValue(18 + random.nextDouble() * 10); // 18-28°C
-//        sensor.setTimestamp(LocalDateTime.now());
-//        return sensor;
-//    }
+    public SensorSimulator(RoomRepository roomRepository) {
+        this.roomRepository = roomRepository;
+    }
+
 
     public List<TemperatureSensor> generateTemperatureDataForYear() {
         String[] rooms = {"bedroom", "livingroom", "toilet", "corridor", "kitchen"};
@@ -53,15 +53,6 @@ public class SensorSimulator {
         return sensorDataList;
     }
 
-//    // Генерация данных воды
-//    public WaterSensor generateWater(String location) {
-//        WaterSensor sensor = new WaterSensor();
-//        sensor.setLocation(location);
-//        sensor.setFlowRate(random.nextDouble() * 2); // 0-2 л/мин
-//        sensor.setTotalConsumption(random.nextDouble() * 100); // 0-100 м³
-//        sensor.setTimestamp(LocalDateTime.now());
-//        return sensor;
-//    }
 
     public List<WaterSensor> generateYearlyWaterData() {
         String[] locations = {"kitchen", "bathroom"};
@@ -104,77 +95,81 @@ public class SensorSimulator {
     }
 
 
-//    // Генерация данных электричества
-//    public ElectricitySensor generateElectricity(String device) {
-//        ElectricitySensor sensor = new ElectricitySensor();
-//        sensor.setDevice(device);
-//        sensor.setPower(100 + random.nextDouble() * 2000); // 100-2100 Вт
-//        sensor.setTotalConsumption(random.nextDouble() * 50); // 0-50 кВт*ч
-//        sensor.setTimestamp(LocalDateTime.now());
-//        return sensor;
-//    }
-public List<ElectricitySensor> generateElectricityDataForYear() {
-    List<ElectricitySensor> dataList = new ArrayList<>();
+    public List<ElectricitySensor> generateElectricityDataForYear() {
+        List<ElectricitySensor> dataList = new ArrayList<>();
 
-    Map<String, Double[]> powerRanges = new HashMap<>();
-    powerRanges.put("чайник", new Double[]{1500.0, 2200.0});
-    powerRanges.put("стиральная машина", new Double[]{400.0, 1000.0});
-    powerRanges.put("электрическая плита", new Double[]{1000.0, 2000.0});
-    powerRanges.put("системный блок", new Double[]{100.0, 300.0});
-    powerRanges.put("монитор", new Double[]{30.0, 70.0});
-    powerRanges.put("светильники в спальне", new Double[]{10.0, 40.0});
-    powerRanges.put("светильники в гостиной", new Double[]{10.0, 40.0});
-    powerRanges.put("телевизор", new Double[]{80.0, 200.0});
-    powerRanges.put("потолочные лампы (bedroom)", new Double[]{60.0, 120.0});
-    powerRanges.put("потолочные лампы (livingroom)", new Double[]{60.0, 120.0});
-    powerRanges.put("микроволновка", new Double[]{800.0, 1500.0});
-    powerRanges.put("зарядка ноутбука", new Double[]{30.0, 90.0});
-    powerRanges.put("зарядка телефонов", new Double[]{5.0, 20.0});
+        Map<String, Double[]> powerRanges = Map.ofEntries(
+                Map.entry("чайник", new Double[]{1500.0, 2200.0}),
+                Map.entry("стиральная машина", new Double[]{400.0, 1000.0}),
+                Map.entry("электрическая плита", new Double[]{1000.0, 2000.0}),
+                Map.entry("системный блок", new Double[]{100.0, 300.0}),
+                Map.entry("монитор", new Double[]{30.0, 70.0}),
+                Map.entry("светильники в спальне", new Double[]{10.0, 40.0}),
+                Map.entry("светильники в гостиной", new Double[]{10.0, 40.0}),
+                Map.entry("телевизор", new Double[]{80.0, 200.0}),
+                Map.entry("потолочные лампы (bedroom)", new Double[]{60.0, 120.0}),
+                Map.entry("потолочные лампы (livingroom)", new Double[]{60.0, 120.0}),
+                Map.entry("микроволновка", new Double[]{800.0, 1500.0}),
+                Map.entry("зарядка ноутбука", new Double[]{30.0, 90.0}),
+                Map.entry("зарядка телефонов", new Double[]{5.0, 20.0})
+        );
 
-    int year = LocalDate.now().getYear();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
+        // Сопоставление устройства и комнаты
+        Map<String, String> deviceToRoom = Map.ofEntries(
+                Map.entry("чайник", "Кухня"),
+                Map.entry("стиральная машина", "Ванная"),
+                Map.entry("электрическая плита", "Кухня"),
+                Map.entry("системный блок", "Гостиная"),
+                Map.entry("монитор", "Гостиная"),
+                Map.entry("светильники в спальне", "Спальня"),
+                Map.entry("светильники в гостиной", "Гостиная"),
+                Map.entry("телевизор", "Гостиная"),
+                Map.entry("потолочные лампы (bedroom)", "Спальня"),
+                Map.entry("потолочные лампы (livingroom)", "Гостиная"),
+                Map.entry("микроволновка", "Кухня"),
+                Map.entry("зарядка ноутбука", "Спальня"),
+                Map.entry("зарядка телефонов", "Спальня")
+        );
 
-    for (Map.Entry<String, Double[]> entry : powerRanges.entrySet()) {
-        String device = entry.getKey();
-        Double minPower = entry.getValue()[0];
-        Double maxPower = entry.getValue()[1];
+        int year = LocalDate.now().getYear();
 
-        for (int month = 1; month <= 12; month++) {
-            int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
-            for (int day = 1; day <= daysInMonth; day++) {
-                for (int hour = 0; hour < 24; hour++) {
-                    // Зарядка телефонов и ноутбука ночью (0–6 ч)
-                    if ((device.contains("зарядка") && hour >= 0 && hour <= 6) ||
-                            (!device.contains("зарядка") && random.nextDouble() < 0.2)) { // 20% шанс активности в час
-                        LocalDateTime timestamp = LocalDateTime.of(year, month, day, hour, 0, 0);
-                        double power = minPower + random.nextDouble() * (maxPower - minPower);
-                        double consumption = power / 1000.0 * (1.0 / 6.0); // за 10 мин в кВт·ч
+        for (var entry : powerRanges.entrySet()) {
+            String device = entry.getKey();
+            Double minPower = entry.getValue()[0];
+            Double maxPower = entry.getValue()[1];
 
-                        ElectricitySensor sensor = new ElectricitySensor();
-                        sensor.setDevice(device);
-                        sensor.setPower(power);
-                        sensor.setTotalConsumption(consumption);
-                        sensor.setTimestamp(timestamp);
+            String roomName = deviceToRoom.get(device);
+            Room room = roomRepository.findByName(roomName)
+                    .orElseThrow(() -> new RuntimeException("Комната не найдена: " + roomName));
 
-                        dataList.add(sensor);
+            for (int month = 1; month <= 12; month++) {
+                int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
+                for (int day = 1; day <= daysInMonth; day++) {
+                    for (int hour = 0; hour < 24; hour++) {
+                        boolean isNight = hour >= 0 && hour <= 6;
+                        boolean isCharger = device.contains("зарядка");
+                        if ((isCharger && isNight) || (!isCharger && random.nextDouble() < 0.2)) {
+                            LocalDateTime timestamp = LocalDateTime.of(year, month, day, hour, 0);
+                            double power = minPower + random.nextDouble() * (maxPower - minPower);
+                            double consumption = power / 1000.0 * (1.0 / 6.0); // 10 минут
+
+                            ElectricitySensor sensor = new ElectricitySensor();
+                            sensor.setDevice(device);
+                            sensor.setPower(power);
+                            sensor.setTotalConsumption(consumption);
+                            sensor.setTimestamp(timestamp);
+                            sensor.setRoom(room); // установка связи
+
+                            dataList.add(sensor);
+                        }
                     }
                 }
             }
         }
+
+        return dataList;
     }
 
-    return dataList;
-}
-
-
-//    // Генерация данных теплых полов
-//    public FloorHeating generateFloorHeating(String room) {
-//        FloorHeating sensor = new FloorHeating();
-//        sensor.setRoom(room);
-//        sensor.setIsOn(random.nextBoolean()); // случайное включение/выключение
-//        sensor.setTimestamp(LocalDateTime.now());
-//        return sensor;
-//    }
 
     public FloorHeating generateFloorHeating(String room, LocalDateTime timestamp) {
         FloorHeating sensor = new FloorHeating();
@@ -225,3 +220,93 @@ public List<ElectricitySensor> generateElectricityDataForYear() {
     }
 
 }
+
+
+// Генерация данных температуры
+//    public TemperatureSensor generateTemperature(String room) {
+//        TemperatureSensor sensor = new TemperatureSensor();
+//        sensor.setRoom(room);
+//        sensor.setValue(18 + random.nextDouble() * 10); // 18-28°C
+//        sensor.setTimestamp(LocalDateTime.now());
+//        return sensor;
+//    }
+//    // Генерация данных воды
+//    public WaterSensor generateWater(String location) {
+//        WaterSensor sensor = new WaterSensor();
+//        sensor.setLocation(location);
+//        sensor.setFlowRate(random.nextDouble() * 2); // 0-2 л/мин
+//        sensor.setTotalConsumption(random.nextDouble() * 100); // 0-100 м³
+//        sensor.setTimestamp(LocalDateTime.now());
+//        return sensor;
+//    }
+//    // Генерация данных электричества
+//    public ElectricitySensor generateElectricity(String device) {
+//        ElectricitySensor sensor = new ElectricitySensor();
+//        sensor.setDevice(device);
+//        sensor.setPower(100 + random.nextDouble() * 2000); // 100-2100 Вт
+//        sensor.setTotalConsumption(random.nextDouble() * 50); // 0-50 кВт*ч
+//        sensor.setTimestamp(LocalDateTime.now());
+//        return sensor;
+//    }
+//public List<ElectricitySensor> generateElectricityDataForYear() {
+//    List<ElectricitySensor> dataList = new ArrayList<>();
+//
+//    Map<String, Double[]> powerRanges = new HashMap<>();
+//    powerRanges.put("чайник", new Double[]{1500.0, 2200.0});
+//    powerRanges.put("стиральная машина", new Double[]{400.0, 1000.0});
+//    powerRanges.put("электрическая плита", new Double[]{1000.0, 2000.0});
+//    powerRanges.put("системный блок", new Double[]{100.0, 300.0});
+//    powerRanges.put("монитор", new Double[]{30.0, 70.0});
+//    powerRanges.put("светильники в спальне", new Double[]{10.0, 40.0});
+//    powerRanges.put("светильники в гостиной", new Double[]{10.0, 40.0});
+//    powerRanges.put("телевизор", new Double[]{80.0, 200.0});
+//    powerRanges.put("потолочные лампы (bedroom)", new Double[]{60.0, 120.0});
+//    powerRanges.put("потолочные лампы (livingroom)", new Double[]{60.0, 120.0});
+//    powerRanges.put("микроволновка", new Double[]{800.0, 1500.0});
+//    powerRanges.put("зарядка ноутбука", new Double[]{30.0, 90.0});
+//    powerRanges.put("зарядка телефонов", new Double[]{5.0, 20.0});
+//
+//    int year = LocalDate.now().getYear();
+//    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss dd.MM.yyyy");
+//
+//    for (Map.Entry<String, Double[]> entry : powerRanges.entrySet()) {
+//        String device = entry.getKey();
+//        Double minPower = entry.getValue()[0];
+//        Double maxPower = entry.getValue()[1];
+//
+//        for (int month = 1; month <= 12; month++) {
+//            int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
+//            for (int day = 1; day <= daysInMonth; day++) {
+//                for (int hour = 0; hour < 24; hour++) {
+//                    // Зарядка телефонов и ноутбука ночью (0–6 ч)
+//                    if ((device.contains("зарядка") && hour >= 0 && hour <= 6) ||
+//                            (!device.contains("зарядка") && random.nextDouble() < 0.2)) { // 20% шанс активности в час
+//                        LocalDateTime timestamp = LocalDateTime.of(year, month, day, hour, 0, 0);
+//                        double power = minPower + random.nextDouble() * (maxPower - minPower);
+//                        double consumption = power / 1000.0 * (1.0 / 6.0); // за 10 мин в кВт·ч
+//
+//                        ElectricitySensor sensor = new ElectricitySensor();
+//                        sensor.setDevice(device);
+//                        sensor.setPower(power);
+//                        sensor.setTotalConsumption(consumption);
+//                        sensor.setTimestamp(timestamp);
+//
+//                        dataList.add(sensor);
+//                    }
+//                }
+//            }
+//        }
+//    }
+//
+//    return dataList;
+//}
+//
+
+//    // Генерация данных теплых полов
+//    public FloorHeating generateFloorHeating(String room) {
+//        FloorHeating sensor = new FloorHeating();
+//        sensor.setRoom(room);
+//        sensor.setIsOn(random.nextBoolean()); // случайное включение/выключение
+//        sensor.setTimestamp(LocalDateTime.now());
+//        return sensor;
+//    }
