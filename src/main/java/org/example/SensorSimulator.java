@@ -25,30 +25,30 @@ public class SensorSimulator {
         String[] rooms = {"bedroom", "livingroom", "toilet", "corridor", "kitchen"};
         List<TemperatureSensor> sensorDataList = new ArrayList<>();
 
-        LocalDate startDate = LocalDate.now().minusYears(1).withDayOfYear(1); // начало прошлого года
-        LocalDate endDate = LocalDate.now();
-
-        for (String room : rooms) {
-            LocalDate date = startDate;
-
-            while (!date.isAfter(endDate)) {
-                for (int hour = 0; hour < 24; hour++) {
-                    for (int minute = 0; minute < 60; minute += 30) {
-                        LocalTime time = LocalTime.of(hour, minute);
-                        LocalDateTime timestamp = LocalDateTime.of(date, time);
-
-                        TemperatureSensor sensor = new TemperatureSensor();
-                        sensor.setRoom(room);
-                        sensor.setValue(18 + random.nextDouble() * 10); // от 18 до 28
-                        sensor.setTimestamp(timestamp);
-
-                        sensorDataList.add(sensor);
-                    }
-                }
-
-                date = date.plusDays(1);
-            }
-        }
+//        LocalDate startDate = LocalDate.now().minusYears(1).withDayOfYear(1); // начало прошлого года
+//        LocalDate endDate = LocalDate.now();
+//
+//        for (String room : rooms) {
+//            LocalDate date = startDate;
+//
+//            while (!date.isAfter(endDate)) {
+//                for (int hour = 0; hour < 24; hour++) {
+//                    for (int minute = 0; minute < 60; minute += 30) {
+//                        LocalTime time = LocalTime.of(hour, minute);
+//                        LocalDateTime timestamp = LocalDateTime.of(date, time);
+//
+//                        TemperatureSensor sensor = new TemperatureSensor();
+//                        sensor.setRoom(room);
+//                        sensor.setValue(18 + random.nextDouble() * 10); // от 18 до 28
+//                        sensor.setTimestamp(timestamp);
+//
+//                        sensorDataList.add(sensor);
+//                    }
+//                }
+//
+//                date = date.plusDays(1);
+//            }
+//        }
 
         return sensorDataList;
     }
@@ -71,10 +71,16 @@ public class SensorSimulator {
                 // Имитируем большее потребление утром и вечером
                 int hour = current.getHour();
                 if ((hour >= 6 && hour <= 9) || (hour >= 18 && hour <= 22)) {
-                    flowRate = 0.5 + random.nextDouble() * 1.0; // 0.5 - 1.5 л/мин
+                    // Пиковое потребление: утро и вечер
+                    flowRate = 5 + random.nextDouble() * 7; // 5 - 12 л/мин
+                } else if (hour >= 22 || hour <= 5) {
+                    // Ночь, минимальное потребление
+                    flowRate = random.nextDouble() * 2; // 0 - 0.5 л/мин
                 } else {
-                    flowRate = random.nextDouble() * 0.3; // 0 - 0.3 л/мин
+                    // Остальное время — умеренное потребление
+                    flowRate = 1 + random.nextDouble() * 4; // 1 - 5 л/мин
                 }
+
 
                 // Расход за час = flowRate * 60
                 double hourlyConsumption = flowRate * 60 / 1000; // в м³
@@ -131,41 +137,41 @@ public class SensorSimulator {
                 Map.entry("зарядка телефонов", "Спальня")
         );
 
-        int year = LocalDate.now().getYear();
-
-        for (var entry : powerRanges.entrySet()) {
-            String device = entry.getKey();
-            Double minPower = entry.getValue()[0];
-            Double maxPower = entry.getValue()[1];
-
-            String roomName = deviceToRoom.get(device);
-            Room room = roomRepository.findByName(roomName)
-                    .orElseThrow(() -> new RuntimeException("Комната не найдена: " + roomName));
-
-            for (int month = 1; month <= 12; month++) {
-                int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
-                for (int day = 1; day <= daysInMonth; day++) {
-                    for (int hour = 0; hour < 24; hour++) {
-                        boolean isNight = hour >= 0 && hour <= 6;
-                        boolean isCharger = device.contains("зарядка");
-                        if ((isCharger && isNight) || (!isCharger && random.nextDouble() < 0.2)) {
-                            LocalDateTime timestamp = LocalDateTime.of(year, month, day, hour, 0);
-                            double power = minPower + random.nextDouble() * (maxPower - minPower);
-                            double consumption = power / 1000.0 * (1.0 / 6.0); // 10 минут
-
-                            ElectricitySensor sensor = new ElectricitySensor();
-                            sensor.setDevice(device);
-                            sensor.setPower(power);
-                            sensor.setTotalConsumption(consumption);
-                            sensor.setTimestamp(timestamp);
-                            sensor.setRoom(room); // установка связи
-
-                            dataList.add(sensor);
-                        }
-                    }
-                }
-            }
-        }
+//        int year = LocalDate.now().getYear();
+//
+//        for (var entry : powerRanges.entrySet()) {
+//            String device = entry.getKey();
+//            Double minPower = entry.getValue()[0];
+//            Double maxPower = entry.getValue()[1];
+//
+//            String roomName = deviceToRoom.get(device);
+//            Room room = roomRepository.findByName(roomName)
+//                    .orElseThrow(() -> new RuntimeException("Комната не найдена: " + roomName));
+//
+//            for (int month = 1; month <= 12; month++) {
+//                int daysInMonth = YearMonth.of(year, month).lengthOfMonth();
+//                for (int day = 1; day <= daysInMonth; day++) {
+//                    for (int hour = 0; hour < 24; hour++) {
+//                        boolean isNight = hour >= 0 && hour <= 6;
+//                        boolean isCharger = device.contains("зарядка");
+//                        if ((isCharger && isNight) || (!isCharger && random.nextDouble() < 0.2)) {
+//                            LocalDateTime timestamp = LocalDateTime.of(year, month, day, hour, 0);
+//                            double power = minPower + random.nextDouble() * (maxPower - minPower);
+//                            double consumption = power / 1000.0 * (1.0 / 6.0); // 10 минут
+//
+//                            ElectricitySensor sensor = new ElectricitySensor();
+//                            sensor.setDevice(device);
+//                            sensor.setPower(power);
+//                            sensor.setTotalConsumption(consumption);
+//                            sensor.setTimestamp(timestamp);
+//                            sensor.setRoom(room); // установка связи
+//
+//                            dataList.add(sensor);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         return dataList;
     }
@@ -176,45 +182,45 @@ public class SensorSimulator {
         sensor.setRoom(room);
         sensor.setTimestamp(timestamp);
 
-        boolean isOn = false;
-        int hour = timestamp.getHour();
-        int month = timestamp.getMonthValue();
-
-        switch (room) {
-            case "bathroom" -> {
-                // Утром и вечером
-                isOn = (hour >= 6 && hour < 9) || (hour >= 19 && hour < 23);
-            }
-            case "balcony" -> {
-                // Только зимой днём
-                boolean isWinter = month == 12 || month == 1 || month == 2;
-                isOn = isWinter && (hour >= 10 && hour < 18);
-            }
-        }
-
-        sensor.setIsOn(isOn);
+//        boolean isOn = false;
+//        int hour = timestamp.getHour();
+//        int month = timestamp.getMonthValue();
+//
+//        switch (room) {
+//            case "bathroom" -> {
+//                // Утром и вечером
+//                isOn = (hour >= 6 && hour < 9) || (hour >= 19 && hour < 23);
+//            }
+//            case "balcony" -> {
+//                // Только зимой днём
+//                boolean isWinter = month == 12 || month == 1 || month == 2;
+//                isOn = isWinter && (hour >= 10 && hour < 18);
+//            }
+//        }
+//
+//        sensor.setIsOn(isOn);
         return sensor;
     }
 
     public List<FloorHeating> generateFloorHeatingDataForYear() {
         List<FloorHeating> dataList = new ArrayList<>();
-        String[] rooms = {"bathroom", "balcony"};
-        LocalDate startDate = LocalDate.now().minusYears(1).withDayOfYear(1);
-        LocalDate endDate = startDate.plusYears(1);
-
-        for (String room : rooms) {
-            LocalDate currentDate = startDate;
-            while (!currentDate.isEqual(endDate)) {
-                for (int hour = 0; hour < 24; hour++) {
-                    for (int minute = 0; minute < 60; minute += 30) {
-                        LocalDateTime timestamp = currentDate.atTime(hour, minute);
-                        FloorHeating data = generateFloorHeating(room, timestamp);
-                        dataList.add(data);
-                    }
-                }
-                currentDate = currentDate.plusDays(1);
-            }
-        }
+//        String[] rooms = {"bathroom", "balcony"};
+//        LocalDate startDate = LocalDate.now().minusYears(1).withDayOfYear(1);
+//        LocalDate endDate = startDate.plusYears(1);
+//
+//        for (String room : rooms) {
+//            LocalDate currentDate = startDate;
+//            while (!currentDate.isEqual(endDate)) {
+//                for (int hour = 0; hour < 24; hour++) {
+//                    for (int minute = 0; minute < 60; minute += 30) {
+//                        LocalDateTime timestamp = currentDate.atTime(hour, minute);
+//                        FloorHeating data = generateFloorHeating(room, timestamp);
+//                        dataList.add(data);
+//                    }
+//                }
+//                currentDate = currentDate.plusDays(1);
+//            }
+//        }
 
         return dataList;
     }
